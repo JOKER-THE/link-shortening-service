@@ -67,6 +67,6 @@ class SiteController extends AbstractController
             return $this->redirect('http://' . $url->getOriginalUrl());
         }
 
-        return $this->redirectToRoute('index');
+        throw $this->createNotFoundException();
     }
 }

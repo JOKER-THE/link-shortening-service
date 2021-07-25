@@ -9,9 +9,17 @@ use Symfony\Component\Routing\Annotation\Route;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\Url;
 use App\Form\UrlFormType;
+use App\Repository\UrlRepository;
 
 class SiteController extends AbstractController
 {
+    private $urlRepository;
+
+    public function __construct(UrlRepository $urlRepository)
+    {
+        $this->urlRepository = $urlRepository;
+    }
+
     /**
      * @Route("/", name="index")
      */
@@ -21,17 +29,34 @@ class SiteController extends AbstractController
         $form = $this->createForm(UrlFormType::class, $model);
         $form->handleRequest($request);
 
-        $link = '';
-
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->persist($model);
             $entityManager->flush();
-            $link = $model->getId() . ' created';
+
+            return $this->redirectToRoute('success', [
+                'url' => $model->getNewLink()
+            ]);
         }
 
         return $this->render('site/index.html.twig', [
-            'link' => $link,
             'form' => $form->createView()
+        ]);
+    }
+
+    /**
+     * @Route("/success/{url}", name="success")
+     */
+    public function success(string $url): Response
+    {
+        $message = 'Parameters not found';
+
+        if ($url) {
+            $model = $this->urlRepository->findOneByNewLink($url);
+            $message = $model ? 'Short Link:' . $model->getNewLink() : 'Short Link not found';
+        }
+
+        return $this->render('site/success.html.twig', [
+            'link' => $message
         ]);
     }
 }

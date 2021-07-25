@@ -32,4 +32,18 @@ class UrlRepository extends ServiceEntityRepository
             ->getOneOrNullResult()
         ;
     }
+
+    /**
+     * @param string $value new_link
+     * @return Url Returns an one Url object
+     */
+    public function findOneByNewLink(string $value): ?Url
+    {
+        return $this->createQueryBuilder('u')
+            ->andWhere('u.new_link = :val')
+            ->setParameter('val', $value)
+            ->getQuery()
+            ->getOneOrNullResult()
+        ;
+    }
 }

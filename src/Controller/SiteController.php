@@ -48,15 +48,25 @@ class SiteController extends AbstractController
      */
     public function success(string $url): Response
     {
-        $message = 'Parameters not found';
-
-        if ($url) {
-            $model = $this->urlRepository->findOneByNewLink($url);
-            $message = $model ? 'Short Link:' . $model->getNewLink() : 'Short Link not found';
-        }
+        $model = $this->urlRepository->findOneByNewLink($url);
+        $message = $model ? 'Short Link:' . $model->getNewLink() : 'Short Link not found';
 
         return $this->render('site/success.html.twig', [
             'link' => $message
         ]);
+    }
+
+    /**
+     * @Route("/{url}")
+     */
+    public function toPage(string $url): Response
+    {
+        $url = $this->urlRepository->findOneByNewLink($url);
+
+        if ($url) {
+            return $this->redirect('http://' . $url->getOriginalUrl());
+        }
+
+        return $this->redirectToRoute('index');
     }
 }

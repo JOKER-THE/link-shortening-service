@@ -10,14 +10,17 @@ use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\Url;
 use App\Form\UrlFormType;
 use App\Repository\UrlRepository;
+use App\Service\UrlService;
 
 class SiteController extends AbstractController
 {
     private $urlRepository;
+    private $urlService;
 
-    public function __construct(UrlRepository $urlRepository)
+    public function __construct(UrlRepository $urlRepository, UrlService $urlService)
     {
         $this->urlRepository = $urlRepository;
+        $this->urlService = $urlService;
     }
 
     /**
@@ -30,6 +33,7 @@ class SiteController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $this->urlService->generateLink($model);
             $entityManager->persist($model);
             $entityManager->flush();
 
@@ -48,8 +52,9 @@ class SiteController extends AbstractController
      */
     public function success(string $url): Response
     {
+        $baseUrl = $this->getParameter('base.url');
         $model = $this->urlRepository->findOneByNewLink($url);
-        $message = $model ? 'Short Link:' . $model->getNewLink() : 'Short Link not found';
+        $message = $model ? $this->urlService->getShortUrl($model, $baseUrl) : 'Short Link not found';
 
         return $this->render('site/success.html.twig', [
             'link' => $message
@@ -64,7 +69,8 @@ class SiteController extends AbstractController
         $url = $this->urlRepository->findOneByNewLink($url);
 
         if ($url) {
-            return $this->redirect('http://' . $url->getOriginalUrl());
+            $link = $this->urlService->getLink($url);
+            return $this->redirect($link);
         }
 
         throw $this->createNotFoundException();
